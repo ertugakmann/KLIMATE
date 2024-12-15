@@ -1,9 +1,9 @@
 import { API_CONFIG } from "./config";
-import {
-  Coordinates,
+import type {
+  WeatherData,
   ForecastData,
   GeocodingResponse,
-  WeatherData,
+  Coordinates,
 } from "./types";
 
 class WeatherAPI {
@@ -12,7 +12,6 @@ class WeatherAPI {
       appid: API_CONFIG.API_KEY,
       ...params,
     });
-
     return `${endpoint}?${searchParams.toString()}`;
   }
 
@@ -20,42 +19,49 @@ class WeatherAPI {
     const response = await fetch(url);
 
     if (!response.ok) {
-      throw new Error("Failed to fetch data");
+      throw new Error(`Weather API Error: ${response.statusText}`);
     }
 
     return response.json();
   }
 
-  async getCurrentUser({ lat, lon }: Coordinates): Promise<WeatherData> {
+  async getCurrentWeather({ lat, lon }: Coordinates): Promise<WeatherData> {
     const url = this.createUrl(`${API_CONFIG.BASE_URL}/weather`, {
       lat: lat.toString(),
       lon: lon.toString(),
-      units: API_CONFIG.DEFAULT_PARAMS.units,
+      units: "metric",
     });
-
     return this.fetchData<WeatherData>(url);
   }
 
-  async getForeceast({ lat, lon }: Coordinates): Promise<ForecastData> {
+  async getForecast({ lat, lon }: Coordinates): Promise<ForecastData> {
     const url = this.createUrl(`${API_CONFIG.BASE_URL}/forecast`, {
       lat: lat.toString(),
       lon: lon.toString(),
-      units: API_CONFIG.DEFAULT_PARAMS.units,
+      units: "metric",
     });
-
     return this.fetchData<ForecastData>(url);
   }
 
-  async reverseGeoCode({
+  async reverseGeocode({
     lat,
     lon,
   }: Coordinates): Promise<GeocodingResponse[]> {
-    const url = this.createUrl(`${API_CONFIG.BASE_URL}/reverse`, {
+    const url = this.createUrl(`${API_CONFIG.GEO_CODING}/reverse`, {
       lat: lat.toString(),
       lon: lon.toString(),
       limit: "1",
     });
+    return this.fetchData<GeocodingResponse[]>(url);
+  }
 
+  async searchLocations(query: string): Promise<GeocodingResponse[]> {
+    const url = this.createUrl(`${API_CONFIG.GEO_CODING}/direct`, {
+      q: query,
+      limit: "5",
+    });
     return this.fetchData<GeocodingResponse[]>(url);
   }
 }
+
+export const weatherAPI = new WeatherAPI();
