@@ -10,8 +10,8 @@ interface CurrentWeatherProps {
 const CurrentWeather = ({ data, locationName }: CurrentWeatherProps) => {
   const {
     weather: [currentWeather],
-    main: { temp, feels_like, temp_min, temp_max, pressure, humidity },
-    wind: { speed, deg },
+    main: { temp, feels_like, temp_min, temp_max, humidity },
+    wind: { speed },
   } = data;
 
   const formatTemp = (temp: number) => `${Math.round(temp)}°C`;

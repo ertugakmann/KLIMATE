@@ -11,7 +11,6 @@ import {
   useReverseGeocodeQuery,
   useWeatherQuery,
 } from "@/hooks/useWeather";
-import { Corner } from "@radix-ui/react-scroll-area";
 import { AlertTriangle, MapPin, RefreshCw } from "lucide-react";
 
 const WeatherDashboard = () => {
@@ -21,18 +20,24 @@ const WeatherDashboard = () => {
   const forecastQuery = useForecastQuery(coordinates);
   const locationQuery = useReverseGeocodeQuery(coordinates);
 
-  console.log(weatherQuery.data);
-
+  // Handle refresh of data
   const handleRefresh = () => {
     weatherQuery.refetch();
     forecastQuery.refetch();
     locationQuery.refetch();
   };
 
-  if (isLoading) {
+  // Show skeleton loader if still loading
+  if (
+    isLoading ||
+    weatherQuery.isLoading ||
+    forecastQuery.isLoading ||
+    locationQuery.isLoading
+  ) {
     return <WeatherSkeleton />;
   }
 
+  // Handle cases where location is not available
   if (!coordinates) {
     return (
       <Alert variant="destructive">
@@ -49,8 +54,7 @@ const WeatherDashboard = () => {
     );
   }
 
-  const locationName = locationQuery.data?.[0];
-
+  // Handle errors in queries
   if (weatherQuery.error || forecastQuery.error || locationQuery.error) {
     return (
       <Alert variant="destructive">
@@ -67,12 +71,25 @@ const WeatherDashboard = () => {
     );
   }
 
-  if (
-    weatherQuery.isLoading ||
-    forecastQuery.isLoading ||
-    locationQuery.isLoading
-  ) {
-    return <WeatherSkeleton />;
+  const locationName = locationQuery.data?.[0];
+
+  // Check if the weather data is available
+  const weatherData = weatherQuery.data;
+  const forecastData = forecastQuery.data;
+
+  if (!weatherData || !forecastData) {
+    return (
+      <Alert variant="destructive">
+        <AlertTriangle className="h-4 w-4" />
+        <AlertTitle>No Weather Data Available</AlertTitle>
+        <AlertDescription className="flex flex-col gap-4">
+          <p>
+            Unable to load the weather data at the moment. Please try again
+            later.
+          </p>
+        </AlertDescription>
+      </Alert>
+    );
   }
 
   return (
@@ -95,19 +112,15 @@ const WeatherDashboard = () => {
       </div>
 
       {/* Current and Hourly weather */}
-
       <div className="grid gap-6">
         <div className="flex flex-col lg:flex-row gap-4">
-          <CurrentWeather
-            data={weatherQuery.data}
-            locationName={locationName}
-          />
-          <HourlyTemprature data={forecastQuery.data} />
+          <CurrentWeather data={weatherData} locationName={locationName} />
+          <HourlyTemprature data={forecastData} />
         </div>
 
         <div className="grid gap-6 md:grid-cols-2 items-start">
-          <WeatherDetails data={weatherQuery.data} />
-          <WeatherForecast data={forecastQuery.data} />
+          <WeatherDetails data={weatherData} />
+          <WeatherForecast data={forecastData} />
         </div>
       </div>
     </div>
